@@ -3,17 +3,14 @@ package scalashop
 import java.awt._
 import java.awt.event._
 import javax.swing._
-import javax.swing.event._
-import scala.collection.parallel._
-import scala.collection.par._
-import scala.collection.mutable.ArrayBuffer
-import scala.reflect.ClassTag
+
 import org.scalameter._
-import common._
 
 object ScalaShop {
 
   class ScalaShopFrame extends JFrame("ScalaShop\u2122") {
+    //self =>
+
     setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE)
     setSize(1024, 600)
     setLayout(new BorderLayout)
@@ -78,8 +75,10 @@ object ScalaShop {
     openMenuItem.addActionListener(new ActionListener {
       def actionPerformed(e: ActionEvent) {
         val fc = new JFileChooser()
+        // If 'self =>' is used at the start of this class
+        // 'ScalaShopFrame.this' can be replaced with 'self'
         if (fc.showOpenDialog(ScalaShopFrame.this) == JFileChooser.APPROVE_OPTION) {
-          canvas.loadFile(fc.getSelectedFile.getPath)
+            canvas.loadFile(fc.getSelectedFile.getPath)
         }
       }
     })

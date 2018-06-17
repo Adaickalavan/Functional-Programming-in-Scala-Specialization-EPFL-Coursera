@@ -1,23 +1,33 @@
-package scalashop
+package kmeans
+package fun
 
 import java.awt._
+import java.awt.event._
 import java.awt.image._
 import java.io._
 import javax.imageio._
 import javax.swing._
+import javax.swing.event._
+import common._
 
 class PhotoCanvas extends JComponent {
 
   var imagePath: Option[String] = None
 
-  var image: Img = loadScalaImage()
+  var image = loadEPFLImage()
+
+  val timerDelay = 100
+  val timer =
+    new Timer(timerDelay, new ActionListener() {
+      def actionPerformed(e: ActionEvent): Unit = repaint()
+    })
 
   override def getPreferredSize = {
     new Dimension(image.width, image.height)
   }
 
-  private def loadScalaImage(): Img = {
-    val stream = this.getClass.getResourceAsStream("/scalashop/scala.jpg")
+  private def loadEPFLImage(): Img = {
+    val stream = this.getClass.getResourceAsStream("/kmeans/epfl-view.jpg")
     try {
       loadImage(stream)
     } finally {
@@ -39,14 +49,15 @@ class PhotoCanvas extends JComponent {
     val width = bufferedImage.getWidth
     val height = bufferedImage.getHeight
     val img = new Img(width, height)
-    for (x <- 0 until width; y <- 0 until height) img(x, y) = bufferedImage.getRGB(x, y)
+    for (x <- 0 until width; y <- 0 until height)
+      img(x, y) = bufferedImage.getRGB(x, y)
     img
   }
 
   def reload(): Unit = {
     image = imagePath match {
       case Some(path) => loadFileImage(path)
-      case None => loadScalaImage()
+      case None => loadEPFLImage()
     }
     repaint()
   }
@@ -56,17 +67,19 @@ class PhotoCanvas extends JComponent {
     reload()
   }
 
-  def applyFilter(filterName: String, numTasks: Int, radius: Int): Unit = {
-    val dst = new Img(image.width, image.height)
-    filterName match {
-      case "horizontal-box-blur" =>
-        HorizontalBoxBlur.parBlur(image, dst, numTasks, radius)
-      case "vertical-box-blur" =>
-        VerticalBoxBlur.parBlur(image, dst, numTasks, radius)
-      case "" => Unit
-    }
-    image = dst
+  def saveFile(path: String): Unit = {
+    reload()
+    val stream = new FileOutputStream(path)
+    val bufferedImage = new BufferedImage(image.width, image.height, BufferedImage.TYPE_INT_ARGB)
+    for (x <- 0 until image.width; y <- 0 until image.height) bufferedImage.setRGB(x, y, image(x, y))
+    ImageIO.write(bufferedImage, "png", stream)
+  }
+
+  def applyIndexedColors(colorCount: Int, initStrategy: InitialSelectionStrategy, convStrategy: ConvergenceStrategy): String = {
+    val filter = new IndexedColorFilter(image, colorCount, initStrategy, convStrategy)
+    image = filter.getResult()
     repaint()
+    filter.getStatus()
   }
 
   override def paintComponent(gcan: Graphics) = {

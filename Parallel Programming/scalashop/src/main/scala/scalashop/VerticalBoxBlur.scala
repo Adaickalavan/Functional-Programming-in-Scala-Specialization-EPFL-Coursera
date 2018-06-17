@@ -1,6 +1,7 @@
 package scalashop
 
 import org.scalameter._
+import common._
 
 object VerticalBoxBlurRunner {
 
@@ -59,10 +60,16 @@ object VerticalBoxBlur {
    */
   def parBlur(src: Img, dst: Img, numTasks: Int, radius: Int): Unit = {
     // TODO implement using the `task` construct and the `blur` method
-
-    src.width
-    = blur(src, dst, x, y, radius)
-    }
+    require(numTasks > 0, "numTasks must be greater than zero")
+    val points = 0 to src.width by math.max(src.width/numTasks,1)
+    val tuplePoints = points.zip(points.tail)
+    val ll: Unit = {
+      for {
+        (from, end) <- tuplePoints
+      } yield {
+        task[Unit](blur(src, dst, from, end, radius))
+      }
+    }.foreach(_.join())
   }
 
 }

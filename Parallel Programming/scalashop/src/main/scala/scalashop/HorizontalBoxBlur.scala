@@ -1,6 +1,7 @@
 package scalashop
 
 import org.scalameter._
+import common._
 
 object HorizontalBoxBlurRunner {
 
@@ -42,8 +43,12 @@ object HorizontalBoxBlur {
    */
   def blur(src: Img, dst: Img, from: Int, end: Int, radius: Int): Unit = {
   // TODO implement this method using the `boxBlurKernel` method
-
-  ???
+    for{
+      x <- 0 until src.width
+      y <- from until end
+    } {
+      dst(x,y) = boxBlurKernel(src, x, y, radius)
+    }
   }
 
   /** Blurs the rows of the source image in parallel using `numTasks` tasks.
@@ -54,8 +59,16 @@ object HorizontalBoxBlur {
    */
   def parBlur(src: Img, dst: Img, numTasks: Int, radius: Int): Unit = {
   // TODO implement using the `task` construct and the `blur` method
-
-  ???
+    require(numTasks > 0, "numTasks must be greater than zero")
+    val points = 0 to src.height by math.max(src.height/numTasks,1)
+    val tuplePoints = points.zip(points.tail)
+    val ll: Unit = {
+      for {
+        (from, end) <- tuplePoints
+      } yield {
+        task[Unit](blur(src, dst, from, end, radius))
+      }
+    }.foreach(_.join())
   }
 
 }
